@@ -7,8 +7,10 @@ import java.text.SimpleDateFormat;
 import java.sql.Timestamp;
 import java.net.*;
 import java.io.*;
+import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 class Client{
 	
 	//timer task that checks for messages every second
@@ -35,8 +37,8 @@ class Client{
 			message.requestedUser = requested;
 			message.timestamp = sdf.format(timestamp);
 			try{
-			String response = Client.this.post(message);
-			System.out.println(keys.decrypt(response));
+			//String response = Client.this.post(message);
+			//System.out.println(keys.decrypt(response));
 			}catch(Exception e){
 				System.out.println("ERROR: " + e);
 			};
@@ -54,11 +56,14 @@ class Client{
 		public String message;
 	}
 	
-	public static String post(Message message) throws Exception{
+	public static Map post(Message message){
 		GsonBuilder builder = new GsonBuilder();
 		Gson gson = builder.create();
+		Map map = null;
 		String jsonString = gson.toJson(message);
-		URL url = new URL("web.njit.edu/~as2757/cs656/main.php");
+		//System.out.println(jsonString);
+		try{
+		URL url = new URL("https://web.njit.edu/~as2757/cs656/main.php");
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json; utf-8");
@@ -73,7 +78,13 @@ class Client{
 		while ((line = br.readLine()) != null){
 			response.append(line.trim());
 		}
-		return response.toString();
+		String json = response.toString().substring(0,response.toString().length());
+		System.out.println(json);
+		map = gson.fromJson(json, Map.class);
+		}catch(Exception e){
+			System.out.println("error" + e);
+		}
+		return map;
 	}
 
 	public void startTimer(String username, String password, String requested, KeyChain keys){
@@ -86,7 +97,7 @@ class Client{
 			Client cl = new Client();
 			cl.launch();
 		}catch(Exception e){
-
+			System.out.println(e);
 		}
 	}
 		
@@ -110,20 +121,32 @@ class Client{
 			username = s.nextLine();
 			System.out.print("Password: ");
 			password = s.nextLine();
-			break;
+			message = new Message();
+			Map map;
+			if(c == 'l'){
+				message.type = "login";
+				message.username = username;
+				message.password = password;
+				map = post(message);
+				if(map.get("auth").toString().equals("false")){
+					System.out.println("Username or password incorrect");
+				}else{
+					break;
+				}
+			}else{
+				message.type = "register";
+				message.username = username;
+				message.password = password;
+				message.key = keys.getPublic();
+				map = post(message);
+				if(map.get("done").toString().equals("false")){
+					System.out.println("Username already taken");
+				}else{
+					break;
+				}
+			}
+
 		}
-		message = new Message();
-		if(c == 'l'){
-			message.type = "login";
-			message.username = username;
-			message.password = password;
-		}else{
-			message.type = "register";
-			message.username = username;
-			message.password = password;
-			message.key = keys.getPublic();
-		}
-		post(message);
 		System.out.println("'!message <user>' to start a chat with a user");
 		String command;
 		String messageTarget = null;
@@ -140,14 +163,18 @@ class Client{
 					message.username = username;
 					message.password = password;
 					message.requestedUser = params[1];
-					
-					String response = post(message);
-					if(response.equals("false")){
+					Map map = post(message);
+					if(map.get("done").toString().equals("false")){
 						System.out.println("Error connecting to that user");
 					}else{
-						keys.setPublic(response);
-						Client cl = new Client();
-						cl.startTimer(username, password, params[1], keys);
+						try{
+						keys.setPublic(map.get("pubkey").toString());
+						System.out.println(keys.getPublic);
+						//Client cl = new Client();
+						//cl.startTimer(username, password, params[1], keys);
+						}catch(Exception e){
+							System.out.println(e);
+						}
 					}
 				}
 				//break up command into segments
@@ -164,8 +191,11 @@ class Client{
 					message.requestedUser = messageTarget;
 					message.message = keys.encrypt(command);
 					message.timestamp = sdf.format(timestamp);
-					post(message);
-					System.out.println(sdf.format(timestamp) + " " + username + ": " + command);
+					if(post(message).get("done").toString().equals("false")){
+						System.out.println("Error sending message");
+					}else{
+						System.out.println(sdf.format(timestamp) + " " + username + ": " + command);
+					}
 				}else{
 					System.out.println("Please specify a recipient before trying to send a message");
 				}

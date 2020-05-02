@@ -8,7 +8,7 @@ import java.io.*;
 import java.io.FileWriter;
 import java.io.FileReader;
 import java.math.BigInteger;
-
+import java.util.*;
 public class KeyChain{
 	private PublicKey publickey;
 	private PrivateKey privatekey;
@@ -74,13 +74,18 @@ public class KeyChain{
 	}
 
 	public String getPublic() throws Exception{
-		return new String(publickey.getEncoded());
+		String s = new String(publickey.getEncoded());
+		return Base64.getEncoder().encodeToString(s.getBytes());
 	}
 
 	public void setPublic(String key) throws Exception{
-		byte[] bytes = key.getBytes();
+		try{
+		byte[] bytes = Base64.getDecoder().decode(key);
 		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytes);
 		KeyFactory factory = KeyFactory.getInstance("RSA");
 		publickey = factory.generatePublic(keySpec);
+		}catch(Exception e){
+			System.out.println(e);
+		}
 	}
 }
