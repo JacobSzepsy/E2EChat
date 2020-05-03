@@ -60,28 +60,60 @@ public class KeyChain{
 
 	public String encrypt(String in) throws Exception{
 		cipher.init(Cipher.ENCRYPT_MODE, publickey);
+		int index = 0;
+		String encryptedString = "";
 		byte[] input = in.getBytes();
-		cipher.update(input);
-		byte[] cipherText = cipher.doFinal();
-		return new String(cipherText, "UTF8");
+		while(true){
+			if(input.length < 5){
+				System.out.println("if");
+				cipher.update(input);
+				byte[] cipherText = cipher.doFinal();
+				String s = new String(cipherText, "UTF8");
+				s = Base64.getEncoder().encodeToString(s.getBytes());
+				encryptedString += s;
+				break;
+			}else{
+				System.out.println("else");
+				byte[] temp = Arrays.copyOfRange(input, 0, 5);
+				System.out.println(new String(temp, "UTF8"));
+				cipher.update(temp);
+				byte[] cipherText = cipher.doFinal();
+				String s = new String(cipherText, "UTF8");
+				s = Base64.getEncoder().encodeToString(s.getBytes());
+				encryptedString += s + "@";
+				input = Arrays.copyOfRange(input, 6, input.length);
+				System.out.println("donei " + input.length);
+			}
+		}
+		return encryptedString;
 	}
 
 	public String decrypt(String in) throws Exception{
-		byte[] cipherText = in.getBytes();
-		cipher.init(Cipher.DECRYPT_MODE, privatekey);
-		byte[] decipheredText = cipher.doFinal(cipherText);
-		return new String(decipheredText, "UTF9");
+		String[] strings = in.split("@");
+		String decryptedString = "";
+		for(String s : strings){
+			s = s.substring(1);
+			System.out.println(s);
+		
+			if(!s.equals("")){
+			s = new String(Base64.getDecoder().decode(s), "UTF8");
+			byte[] cipherText = s.getBytes();
+			cipher.init(Cipher.DECRYPT_MODE, privatekey);
+			System.out.println(new String(cipherText, "UTF8"));
+			byte[] decipheredText = cipher.doFinal(cipherText);
+			decryptedString += new String(decipheredText, "UTF8");
+			}
+		}
+		return decryptedString;
 	}
 
 	public String getPublic() throws Exception{
-		String s = new String(publickey.getEncoded());
-		return Base64.getEncoder().encodeToString(s.getBytes());
+		return Base64.getEncoder().encodeToString(publickey.getEncoded());
 	}
 
 	public void setPublic(String key) throws Exception{
 		try{
-		byte[] bytes = Base64.getDecoder().decode(key);
-		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytes);
+		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(key));
 		KeyFactory factory = KeyFactory.getInstance("RSA");
 		publickey = factory.generatePublic(keySpec);
 		}catch(Exception e){

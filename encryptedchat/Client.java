@@ -11,6 +11,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import java.util.*;
 class Client{
 	
 	//timer task that checks for messages every second
@@ -19,7 +20,7 @@ class Client{
 		private String password;
 		private String requested;
 		private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		private Timestamp timestamp;
+		private Timestamp timestamp = null;
 		private KeyChain keys;
 
 		GetMessage(String user, String password, String requested, KeyChain keys){
@@ -35,13 +36,26 @@ class Client{
 			message.username = user;
 			message.password = password;
 			message.requestedUser = requested;
-			message.timestamp = sdf.format(timestamp);
+			if(timestamp != null){
+				message.timestamp = sdf.format(timestamp);
+			}
 			try{
-			//String response = Client.this.post(message);
-			//System.out.println(keys.decrypt(response));
+				Map response = Client.this.post(message);
+				//System.out.println(response.get("messages"));
+				ArrayList<String> ls = (ArrayList<String>)response.get("messages");
+				//System.out.println(ls);
+				for(String msg : ls){
+					int index = msg.indexOf(":", 18);
+					String first = msg.substring(0, index+1);
+					String second = msg.substring(index+1);
+					System.out.println(second);
+					System.out.println(first + keys.decrypt(second));
+				
+				}	
+				
 			}catch(Exception e){
 				System.out.println("ERROR: " + e);
-			};
+			}
 			timestamp = current;
 		}
 	}
@@ -61,7 +75,7 @@ class Client{
 		Gson gson = builder.create();
 		Map map = null;
 		String jsonString = gson.toJson(message);
-		//System.out.println(jsonString);
+		
 		try{
 		URL url = new URL("https://web.njit.edu/~as2757/cs656/main.php");
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -79,7 +93,7 @@ class Client{
 			response.append(line.trim());
 		}
 		String json = response.toString().substring(0,response.toString().length());
-		System.out.println(json);
+		//System.out.println(json);
 		map = gson.fromJson(json, Map.class);
 		}catch(Exception e){
 			System.out.println("error" + e);
@@ -168,10 +182,12 @@ class Client{
 						System.out.println("Error connecting to that user");
 					}else{
 						try{
+						System.out.println("before: " + keys.getPublic());
 						keys.setPublic(map.get("pubkey").toString());
-						System.out.println(keys.getPublic);
-						//Client cl = new Client();
-						//cl.startTimer(username, password, params[1], keys);
+						System.out.println("after: " + keys.getPublic());
+						messageTarget = params[1];
+						Client cl = new Client();
+						cl.startTimer(username, password, params[1], keys);
 						}catch(Exception e){
 							System.out.println(e);
 						}
@@ -191,11 +207,12 @@ class Client{
 					message.requestedUser = messageTarget;
 					message.message = keys.encrypt(command);
 					message.timestamp = sdf.format(timestamp);
-					if(post(message).get("done").toString().equals("false")){
-						System.out.println("Error sending message");
-					}else{
-						System.out.println(sdf.format(timestamp) + " " + username + ": " + command);
-					}
+					System.out.println(message.message);
+					System.out.println(keys.decrypt(message.message));
+				//	String response = post(message).get("done").toString();
+				//	if(response.equals("false")){
+				//		System.out.println("Error sending message");
+				//	}
 				}else{
 					System.out.println("Please specify a recipient before trying to send a message");
 				}
