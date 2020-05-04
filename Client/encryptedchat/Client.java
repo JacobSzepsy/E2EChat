@@ -195,7 +195,6 @@ class Client{
 					message.requestedUser = messageTarget;
 					message.message = keys.encrypt(command);
 					message.timestamp = sdf.format(timestamp);
-					System.out.println(message.timestamp + " " + username  + ": " + command);
 					String response = post(message).get("done").toString();
 					if(response.equals("false")){
 						System.out.println("Error sending message");
