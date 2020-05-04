@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.sql.Timestamp;
 import java.net.*;
 import java.io.*;
+import java.lang.Math;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,19 +41,26 @@ class Client{
 				message.timestamp = sdf.format(timestamp);
 			}
 			try{
-				Map response = Client.this.post(message);
+				Map map = Client.this.post(message);
 				//System.out.println(response.get("messages"));
-				ArrayList<String> ls = (ArrayList<String>)response.get("messages");
+				ArrayList response = (ArrayList) map.get("messages");
 				//System.out.println(ls);
-				for(String msg : ls){
-					int index = msg.indexOf(":", 18);
-					String first = msg.substring(0, index+1);
-					String second = msg.substring(index+1);
-					System.out.println(second);
-					System.out.println(first + keys.decrypt(second));
-				
-				}	
-				
+				//response = (ArrayList) response.get(0);
+				for(Object msg : response){
+					ArrayList list = (ArrayList) msg;
+					System.out.println("-------------------------");
+					System.out.println(list);
+					System.out.println("-------------------------");
+					String timestamp = (String) ((ArrayList) list.get(0)).get(0);
+					String user = (String) ((ArrayList) list.get(1)).get(0);
+					System.out.println(timestamp + user);
+					list = (ArrayList) ((ArrayList) list.get(2)).get(0);
+					System.out.println(list);
+					System.out.println(timestamp + " " + user + ": " + keys.decrypt(list));
+				}
+		//test = (ArrayList) test.get(0); //this is the actual byte array
+		//Integer a = new Integer((int) Math.round((Double) test.get(0)));
+		//byte b = a.byteValue();
 			}catch(Exception e){
 				System.out.println("ERROR: " + e);
 			}
@@ -67,7 +75,7 @@ class Client{
 		public String key;
 		public String requestedUser;
 		public String timestamp;
-		public String message;
+		public ArrayList<byte[]> message;
 	}
 	
 	public static Map post(Message message){
@@ -75,7 +83,7 @@ class Client{
 		Gson gson = builder.create();
 		Map map = null;
 		String jsonString = gson.toJson(message);
-		
+		//System.out.println(jsonString);	
 		try{
 		URL url = new URL("https://web.njit.edu/~as2757/cs656/main.php");
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -93,7 +101,8 @@ class Client{
 			response.append(line.trim());
 		}
 		String json = response.toString().substring(0,response.toString().length());
-		//System.out.println(json);
+		
+		
 		map = gson.fromJson(json, Map.class);
 		}catch(Exception e){
 			System.out.println("error" + e);
@@ -207,12 +216,13 @@ class Client{
 					message.requestedUser = messageTarget;
 					message.message = keys.encrypt(command);
 					message.timestamp = sdf.format(timestamp);
-					System.out.println(message.message);
-					System.out.println(keys.decrypt(message.message));
-				//	String response = post(message).get("done").toString();
-				//	if(response.equals("false")){
-				//		System.out.println("Error sending message");
-				//	}
+					//System.out.println(message.message);
+					//System.out.println(keys.decrypt(message.message));
+			
+					String response = post(message).get("done").toString();
+					if(response.equals("false")){
+						System.out.println("Error sending message");
+					}
 				}else{
 					System.out.println("Please specify a recipient before trying to send a message");
 				}

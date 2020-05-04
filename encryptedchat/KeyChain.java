@@ -58,52 +58,84 @@ public class KeyChain{
 		}
 	}
 
-	public String encrypt(String in) throws Exception{
-		cipher.init(Cipher.ENCRYPT_MODE, publickey);
+	public ArrayList<byte[]> encrypt(String in) throws Exception{
 		int index = 0;
 		String encryptedString = "";
 		byte[] input = in.getBytes();
+		ArrayList<byte[]> list = new ArrayList<byte[]>();
+		System.out.println("ENCRYPTION");
+		System.out.println("input is " + input.length + "long");
 		while(true){
-			if(input.length < 5){
-				System.out.println("if");
+			if(input.length <= 5){
+				cipher.init(Cipher.ENCRYPT_MODE, publickey);
 				cipher.update(input);
 				byte[] cipherText = cipher.doFinal();
-				String s = new String(cipherText, "UTF8");
-				s = Base64.getEncoder().encodeToString(s.getBytes());
-				encryptedString += s;
+				String s = new String(cipherText, "US-ASCII");
+				System.out.println("-------------------------");
+				System.out.println("size after encrypt" + cipherText.length);
+				System.out.println(s);
+				System.out.println("-------------------------");
+				//encryptedString += s;
+				list.add(cipherText);
 				break;
 			}else{
-				System.out.println("else");
+				
+				cipher.init(Cipher.ENCRYPT_MODE, publickey);
+				
 				byte[] temp = Arrays.copyOfRange(input, 0, 5);
-				System.out.println(new String(temp, "UTF8"));
+				System.out.println(temp.length);
+				System.out.println(new String(temp));
 				cipher.update(temp);
 				byte[] cipherText = cipher.doFinal();
-				String s = new String(cipherText, "UTF8");
-				s = Base64.getEncoder().encodeToString(s.getBytes());
-				encryptedString += s + "@";
+				System.out.println("-------------------------");
+				System.out.println("Size after encrypt" + cipherText.length);
+				System.out.println(new String(cipherText));
+				System.out.println("-------------------------");
+				String s = new String(cipherText);
+				//encryptedString += s + "@@@";
+				list.add(cipherText);
 				input = Arrays.copyOfRange(input, 6, input.length);
-				System.out.println("donei " + input.length);
+				System.out.println("input is " + input.length + "long");
 			}
+
 		}
-		return encryptedString;
+		System.out.println("returning string");
+		return list;
 	}
 
-	public String decrypt(String in) throws Exception{
-		String[] strings = in.split("@");
+	public String decrypt(ArrayList input) throws Exception{
 		String decryptedString = "";
-		for(String s : strings){
-			s = s.substring(1);
-			System.out.println(s);
-		
-			if(!s.equals("")){
-			s = new String(Base64.getDecoder().decode(s), "UTF8");
-			byte[] cipherText = s.getBytes();
+		for(Object outerObj : input){
+			ArrayList bytes = (ArrayList) outerObj;
+			byte[] cipherText = new byte[bytes.size()];
+			int i = 0;
+			for(Object innerObj : bytes){
+				Double d = (Double) innerObj;
+				Integer a = new Integer((int) Math.round(d));
+				cipherText[i] = a.byteValue();
+				i++;
+			}
 			cipher.init(Cipher.DECRYPT_MODE, privatekey);
-			System.out.println(new String(cipherText, "UTF8"));
 			byte[] decipheredText = cipher.doFinal(cipherText);
 			decryptedString += new String(decipheredText, "UTF8");
-			}
 		}
+		//System.out.println("decrypt");
+		//System.out.println(in);
+		//String[] strings = in.split("@@@");
+		//String decryptedString = "";
+		//System.out.println(strings.length + " many entries to decode");
+		//for(String s : strings){
+			//s = s.substring(1);
+		//	System.out.println("-------------------------------");
+		//	System.out.println(s.getBytes().length);
+		//	System.out.println(s);
+		//	System.out.println("-------------------------------");
+		//
+		//	byte[] cipherText = s.getBytes();
+		//	cipher.init(Cipher.DECRYPT_MODE, privatekey);
+		//	byte[] decipheredText = cipher.doFinal(cipherText);
+		//	decryptedString += new String(decipheredText, "UTF8");
+		//}
 		return decryptedString;
 	}
 
