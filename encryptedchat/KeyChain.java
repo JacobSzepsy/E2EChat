@@ -64,23 +64,22 @@ public class KeyChain{
 		byte[] input = in.getBytes();
 		ArrayList<byte[]> list = new ArrayList<byte[]>();
 		while(true){
-			if(input.length < 5){
+			if(input.length <= 245){
 				cipher.init(Cipher.ENCRYPT_MODE, publickey);
 				cipher.update(input);
 				byte[] cipherText = cipher.doFinal();
-				//encryptedString += s;
 				list.add(cipherText);
 				break;
 			}else{
 				
 				cipher.init(Cipher.ENCRYPT_MODE, publickey);
 				
-				byte[] temp = Arrays.copyOfRange(input, 0, 5);
+				byte[] temp = Arrays.copyOfRange(input, 0, 245);
 				cipher.update(temp);
 				byte[] cipherText = cipher.doFinal();
 				String s = new String(cipherText);
 				list.add(cipherText);
-				input = Arrays.copyOfRange(input, 5, input.length);
+				input = Arrays.copyOfRange(input, 245, input.length);
 			}
 
 		}
