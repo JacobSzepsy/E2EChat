@@ -63,18 +63,11 @@ public class KeyChain{
 		String encryptedString = "";
 		byte[] input = in.getBytes();
 		ArrayList<byte[]> list = new ArrayList<byte[]>();
-		System.out.println("ENCRYPTION");
-		System.out.println("input is " + input.length + "long");
 		while(true){
-			if(input.length <= 5){
+			if(input.length < 5){
 				cipher.init(Cipher.ENCRYPT_MODE, publickey);
 				cipher.update(input);
 				byte[] cipherText = cipher.doFinal();
-				String s = new String(cipherText, "US-ASCII");
-				System.out.println("-------------------------");
-				System.out.println("size after encrypt" + cipherText.length);
-				System.out.println(s);
-				System.out.println("-------------------------");
 				//encryptedString += s;
 				list.add(cipherText);
 				break;
@@ -83,23 +76,14 @@ public class KeyChain{
 				cipher.init(Cipher.ENCRYPT_MODE, publickey);
 				
 				byte[] temp = Arrays.copyOfRange(input, 0, 5);
-				System.out.println(temp.length);
-				System.out.println(new String(temp));
 				cipher.update(temp);
 				byte[] cipherText = cipher.doFinal();
-				System.out.println("-------------------------");
-				System.out.println("Size after encrypt" + cipherText.length);
-				System.out.println(new String(cipherText));
-				System.out.println("-------------------------");
 				String s = new String(cipherText);
-				//encryptedString += s + "@@@";
 				list.add(cipherText);
-				input = Arrays.copyOfRange(input, 6, input.length);
-				System.out.println("input is " + input.length + "long");
+				input = Arrays.copyOfRange(input, 5, input.length);
 			}
 
 		}
-		System.out.println("returning string");
 		return list;
 	}
 
@@ -119,23 +103,6 @@ public class KeyChain{
 			byte[] decipheredText = cipher.doFinal(cipherText);
 			decryptedString += new String(decipheredText, "UTF8");
 		}
-		//System.out.println("decrypt");
-		//System.out.println(in);
-		//String[] strings = in.split("@@@");
-		//String decryptedString = "";
-		//System.out.println(strings.length + " many entries to decode");
-		//for(String s : strings){
-			//s = s.substring(1);
-		//	System.out.println("-------------------------------");
-		//	System.out.println(s.getBytes().length);
-		//	System.out.println(s);
-		//	System.out.println("-------------------------------");
-		//
-		//	byte[] cipherText = s.getBytes();
-		//	cipher.init(Cipher.DECRYPT_MODE, privatekey);
-		//	byte[] decipheredText = cipher.doFinal(cipherText);
-		//	decryptedString += new String(decipheredText, "UTF8");
-		//}
 		return decryptedString;
 	}
 
